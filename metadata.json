@@ -1,0 +1,5 @@
+{
+  "name": "DiabetView: Counterfactual Health Visualizer",
+  "description": "Интерактивный симулятор здоровья для пациентов с диабетом. Визуализация сценариев 'Что если' с использованием AI для оценки рисков и генерации визуальных эффектов.",
+  "requestFramePermissions": []
+}
