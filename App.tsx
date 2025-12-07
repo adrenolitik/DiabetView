@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import PatientSidebar from './components/PatientSidebar';
 import InterventionControls from './components/InterventionControls';
 import FaceTab from './components/visualizations/FaceTab';

@@ -1,10 +1,8 @@
 import { GoogleGenAI, Type, Schema } from "@google/genai";
 import { PatientProfile, Intervention, SimulationResult } from "../types";
 
-// NOTE: Ideally, the API key should be in process.env.API_KEY.
-// The code assumes the environment is set up correctly.
-const apiKey = process.env.API_KEY || ''; 
-const ai = new GoogleGenAI({ apiKey });
+// The API key must be obtained exclusively from the environment variable process.env.API_KEY
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 const analysisSchema: Schema = {
   type: Type.OBJECT,
@@ -44,7 +42,7 @@ export const analyzePatientData = async (
   profile: PatientProfile, 
   intervention: Intervention
 ): Promise<SimulationResult> => {
-  if (!apiKey) {
+  if (!process.env.API_KEY) {
     console.warn("No API Key found. Returning mock data.");
     return getMockData(profile, intervention);
   }
@@ -108,7 +106,7 @@ const getMockData = (profile: PatientProfile, intervention: Intervention): Simul
       heartHealth: Math.max(20, 100 - (riskFactor * 1.2)),
       nerveHealth: Math.max(20, 100 - (profile.hba1c * 4)),
       vascularHealth: Math.max(20, 100 - (profile.systolicBP - 110)),
-      explanation: "Высокий уровень HbA1c и факторы риска значительно снижают показатели здоровья."
+      explanation: "Высокий уровень HbA1c и факторы риска значительно снижают показатели здоровья. (Демо режим - введите API ключ для AI анализа)"
     },
     counterfactual: {
       cvdRisk10Year: Math.min(Math.round(improvedRiskFactor * 1.5), 99),
@@ -124,14 +122,17 @@ const getMockData = (profile: PatientProfile, intervention: Intervention): Simul
 };
 
 export const editFaceImage = async (base64Image: string, isImprovement: boolean, profile: PatientProfile): Promise<string | null> => {
-  if (!apiKey) return null;
+  if (!process.env.API_KEY) return null;
 
   // We trim the data:image/png;base64 part if present
   const base64Data = base64Image.replace(/^data:image\/(png|jpeg|jpg);base64,/, "");
 
+  // Using profile data to improve the context for the AI
+  const context = `a ${profile.age} year old ${profile.gender}`;
+
   const prompt = isImprovement 
-    ? "Make the person in the photo look healthier, more vibrant, with clearer skin and a slight smile. High quality, photorealistic."
-    : `Make the person look like they are suffering from complications of chronic diabetes. Add signs of slight puffiness, fatigue, paler skin, and subtle aging. Maintain identity. High quality, photorealistic.`;
+    ? `Make this ${context} look healthier, more vibrant, with clearer skin and a slight smile. High quality, photorealistic.`
+    : `Make this ${context} look like they are suffering from complications of chronic diabetes. Add signs of slight puffiness, fatigue, paler skin, and subtle aging. Maintain identity. High quality, photorealistic.`;
 
   try {
     const response = await ai.models.generateContent({
@@ -150,12 +151,6 @@ export const editFaceImage = async (base64Image: string, isImprovement: boolean,
         ],
       },
     });
-
-    // Gemini 2.5 flash image text prompt with image input generates a description usually, 
-    // unless used with generateImages or specific config. 
-    // However, the instructions for 'Edit Images' use generateContent with image + text.
-    // We need to parse the response to see if it returned an image.
-    // The instruction examples show checking inlineData.
 
     for (const part of response.candidates?.[0]?.content?.parts || []) {
       if (part.inlineData) {
