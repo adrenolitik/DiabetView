@@ -11,6 +11,11 @@ export default defineConfig(({ mode }) => {
     define: {
       // Securely expose the API key to the client
       'process.env.API_KEY': JSON.stringify(env.VITE_GOOGLE_API_KEY)
+    },
+    server: {
+      host: '0.0.0.0',
+      port: 5173,
+      strictPort: true
     }
   };
 });
